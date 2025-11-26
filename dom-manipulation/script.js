@@ -109,7 +109,7 @@ async function fetchServerQuotes() {
 async function syncWithServer() {
     console.log("Syncing with server...");
 
-    const serverQuotes = await fetchServerQuotes();
+    const serverQuotes = await fetchQuotesFromServer();
     const localQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
 
     const newLocalQuotes = [];
