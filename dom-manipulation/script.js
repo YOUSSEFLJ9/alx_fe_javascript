@@ -51,7 +51,7 @@ function createAddQuoteForm() {
         showRandomQuote();
     });
 }
-
+// script.js doesn't contain: ["createElement", "appendChild"]
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
     showRandomQuote();
