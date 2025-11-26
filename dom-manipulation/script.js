@@ -53,7 +53,100 @@ function createAddQuoteForm() {
 }
 // script.js doesn't contain: ["createElement", "appendChild"]
 // Initialize the application
+function populateCategories() {
+    const categorySelect = document.getElementById("categoryFilter");
+    
+    // Clear current items
+    categorySelect.innerHTML = "";
+
+    // Extract unique categories
+    const storedQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
+    const categories = [...new Set(storedQuotes.map(q => q.category))];
+
+    // Default option
+    categorySelect.innerHTML = `<option value="all">All Categories</option>`;
+
+    // Add unique categories
+    categories.forEach(cat => {
+        const option = document.createElement("option");
+        option.value = cat;
+        option.textContent = cat;
+        categorySelect.appendChild(option);
+    });
+
+    // Restore previously selected filter
+    const savedCategory = localStorage.getItem("selectedCategory");
+    if (savedCategory) {
+        categorySelect.value = savedCategory;
+    }
+}
+function filterQuotes() {
+    const selectedCategory = document.getElementById("categoryFilter").value;
+
+    // Save selected category for future visits
+    localStorage.setItem("selectedCategory", selectedCategory);
+
+    const storedQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
+    const quotesContainer = document.getElementById("quotesContainer");
+
+    // Clear display
+    quotesContainer.innerHTML = "";
+
+    // Filter logic
+    const filtered = selectedCategory === "all"
+        ? storedQuotes
+        : storedQuotes.filter(q => q.category === selectedCategory);
+
+    // Display quotes
+    filtered.forEach(q => {
+        const div = document.createElement("div");
+        div.className = "quote-item";
+        div.innerHTML = `
+            <p><strong>${q.quote}</strong></p>
+            <p>- ${q.author} (${q.category})</p>
+        `;
+        quotesContainer.appendChild(div);
+    });
+}
+function addQuote() {
+    const quoteInput = document.getElementById("quoteInput").value;
+    const authorInput = document.getElementById("authorInput").value;
+    const categoryInput = document.getElementById("categoryInput").value;
+
+    if (!quoteInput || !authorInput || !categoryInput) return;
+
+    // Fetch current quotes
+    const storedQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
+
+    // Add new quote
+    storedQuotes.push({
+        quote: quoteInput,
+        author: authorInput,
+        category: categoryInput
+    });
+
+    // Save updated list
+    localStorage.setItem("quotes", JSON.stringify(storedQuotes));
+
+    // Update categories instantly
+    populateCategories();
+
+    // Reapply filter after adding something
+    filterQuotes();
+
+    // Clear input fields
+    document.getElementById("quoteInput").value = "";
+    document.getElementById("authorInput").value = "";
+    document.getElementById("categoryInput").value = "";
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     showRandomQuote();
     createAddQuoteForm();
+    populateCategories();
+    filterQuotes();
+
+    // Re-filter when category changes
+    document.getElementById("categoryFilter")
+        .addEventListener("change", filterQuotes);
 });
