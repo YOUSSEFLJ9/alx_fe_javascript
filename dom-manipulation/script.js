@@ -272,5 +272,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (lastViewed) {
         console.log("Last viewed quote (session):", lastViewed);
     }
+    // Wire export/import controls if present in the page
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) exportBtn.addEventListener('click', exportAsJson);
+
+    const importInput = document.getElementById('importFileInput');
+    if (importInput) importInput.addEventListener('change', importFromJsonFile);
 });
 //Export Quotes
