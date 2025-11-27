@@ -273,3 +273,4 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Last viewed quote (session):", lastViewed);
     }
 });
+//Export Quotes
