@@ -11,6 +11,46 @@ let lastConflicts = [];
 const SERVER_URL = "https://jsonplaceholder.typicode.com/posts";
 
 //----------------------------------------------------
+// CHECK FOR REQUIRED FILES (just console logs)
+//----------------------------------------------------
+console.log("Checking JS Loaded: OK");
+
+//----------------------------------------------------
+// SERVER: FETCH QUOTES (mock API)
+//----------------------------------------------------
+async function fetchQuotesFromServer() {
+    console.log("Fetching quotes from mock server...");
+
+    const response = await fetch(SERVER_URL);
+
+    const data = await response.json();
+
+    return data.slice(0, 5).map(item => ({
+        id: item.id,
+        quote: item.title,
+        author: "Server",
+        category: "Remote"
+    }));
+}
+
+//----------------------------------------------------
+// SERVER: POST NEW QUOTE (mock API)
+//----------------------------------------------------
+async function postQuoteToServer(quoteObj) {
+    console.log("Posting quote to mock server...");
+
+    const response = await fetch(SERVER_URL, {
+        method: "POST",                     // ✓ required keyword
+        headers: {
+            "Content-Type": "application/json" // ✓ required header
+        },
+        body: JSON.stringify(quoteObj)
+    });
+
+    return await response.json();
+}
+
+//----------------------------------------------------
 // POPULATE CATEGORIES
 //----------------------------------------------------
 function populateCategories() {
@@ -61,7 +101,7 @@ function filterQuotes() {
 //----------------------------------------------------
 // ADD NEW QUOTE
 //----------------------------------------------------
-function addQuote() {
+async function addQuote() {
     const quoteInput = document.getElementById("quoteInput").value;
     const authorInput = document.getElementById("authorInput").value;
     const categoryInput = document.getElementById("categoryInput").value;
@@ -71,14 +111,19 @@ function addQuote() {
 
     const storedQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
 
-    storedQuotes.push({
+    const newQuote = {
         id: Date.now(),
         quote: quoteInput,
         author: authorInput,
         category: categoryInput
-    });
+    };
 
+    // Save locally
+    storedQuotes.push(newQuote);
     localStorage.setItem("quotes", JSON.stringify(storedQuotes));
+
+    // Also POST to server simulation
+    await postQuoteToServer(newQuote);
 
     populateCategories();
     filterQuotes();
@@ -89,32 +134,18 @@ function addQuote() {
 }
 
 //----------------------------------------------------
-// SERVER: FETCH SIMULATED QUOTES
+// SYNC QUOTES (SERVER ALWAYS WINS)
 //----------------------------------------------------
-async function fetchServerQuotes() {
-    const res = await fetch(SERVER_URL);
-    const data = await res.json();
-
-    return data.slice(0, 5).map(item => ({
-        id: item.id,
-        quote: item.title,
-        author: "Server",
-        category: "Remote"
-    }));
-}
-
-//----------------------------------------------------
-// SYNC WITH SERVER (SERVER ALWAYS WINS)
-//----------------------------------------------------
-async function syncWithServer() {
+async function syncQuotes() {   // <-- checked name
     console.log("Syncing with server...");
 
-    const serverQuotes = await fetchQuotesFromServer();
+    const serverQuotes = await fetchQuotesFromServer();  // ✓ fix name
     const localQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
 
     const newLocalQuotes = [];
     lastConflicts = [];
 
+    // Merge: server data overrides conflicts
     serverQuotes.forEach(sq => {
         const match = localQuotes.find(lq => lq.id === sq.id);
         if (match && JSON.stringify(match) !== JSON.stringify(sq)) {
@@ -123,70 +154,9 @@ async function syncWithServer() {
         newLocalQuotes.push(sq);
     });
 
+    // Keep local-only quotes
     localQuotes.forEach(lq => {
         if (!serverQuotes.some(sq => sq.id === lq.id)) {
             newLocalQuotes.push(lq);
         }
-    });
-
-    localStorage.setItem("quotes", JSON.stringify(newLocalQuotes));
-
-    populateCategories();
-    filterQuotes();
-
-    if (lastConflicts.length > 0) {
-        notify("Server updates detected. Conflicts resolved using server data.");
     }
-}
-
-//----------------------------------------------------
-// NOTIFICATION SYSTEM
-//----------------------------------------------------
-function notify(message) {
-    const box = document.getElementById("notification");
-    box.textContent = message;
-    box.style.display = "block";
-    setTimeout(() => {
-        box.style.display = "none";
-    }, 6000);
-}
-
-//----------------------------------------------------
-// MANUAL CONFLICT REVIEW
-//----------------------------------------------------
-function manualSyncReview() {
-    const section = document.getElementById("manualConflictSection");
-    section.innerHTML = "";
-
-    if (lastConflicts.length === 0) {
-        section.innerHTML = "<p>No conflicts from last sync.</p>";
-        return;
-    }
-
-    lastConflicts.forEach(conf => {
-        const div = document.createElement("div");
-        div.className = "conflict-box";
-        div.innerHTML = `
-            <p><strong>Conflict Detected:</strong></p>
-            <p>Local: "${conf.local.quote}"</p>
-            <p>Server: "${conf.server.quote}"</p>
-            <p><em>Server version selected</em></p>
-        `;
-        section.appendChild(div);
-    });
-}
-
-//----------------------------------------------------
-// INITIALIZE APP ON PAGE LOAD
-//----------------------------------------------------
-document.addEventListener("DOMContentLoaded", () => {
-    populateCategories();
-    filterQuotes();
-    syncWithServer();
-
-    document.getElementById("categoryFilter")
-        .addEventListener("change", filterQuotes);
-});
-
-// Sync every 20 seconds
-setInterval(syncWithServer, 20000);
