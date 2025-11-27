@@ -182,4 +182,6 @@ window.addEventListener('DOMContentLoaded', () => {
     // Do an immediate sync, then every 30 seconds
     syncQuotes();
     setInterval(syncQuotes, 30000);
+    //Quotes synced with server! show this as a toast notification
+    showToast("Quotes synced with server!");
 });
