@@ -18,6 +18,18 @@ function loadQuotes() {
     quotes = stored ? JSON.parse(stored) : [];
 }
 
+// Ensure we have some starter quotes if none exist
+function ensureDefaultQuotes() {
+    if (!quotes || quotes.length === 0) {
+        quotes = [
+            { quote: "Be yourself.", author: "Unknown" },
+            { quote: "The best way to predict the future is to invent it.", author: "Alan Kay" },
+            { quote: "Life is 10% what happens to us and 90% how we react to it.", author: "Charles R. Swindoll" }
+        ];
+        saveQuotes();
+    }
+}
+
 //----------------------------------------------------
 // SAVE QUOTES TO LOCAL STORAGE  (CHECK PASSES HERE)
 //----------------------------------------------------
@@ -134,8 +146,22 @@ function importFromJsonFile(event) {
 //----------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
     loadQuotes();
+    ensureDefaultQuotes();
     displayRandomQuote();
 
     const last = getLastViewedQuote();
     if (last) console.log("Session last viewed:", last);
+
+    // Wire UI buttons if present
+    const newBtn = document.getElementById('newQuote');
+    if (newBtn) newBtn.addEventListener('click', displayRandomQuote);
+
+    const addBtn = document.getElementById('addQuoteBtn');
+    if (addBtn) addBtn.addEventListener('click', addQuote);
+
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) exportBtn.addEventListener('click', exportToJsonFile);
+
+    const importInput = document.getElementById('importFile');
+    if (importInput) importInput.addEventListener('change', importFromJsonFile);
 });
