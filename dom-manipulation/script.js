@@ -159,4 +159,27 @@ async function syncQuotes() {   // <-- checked name
         if (!serverQuotes.some(sq => sq.id === lq.id)) {
             newLocalQuotes.push(lq);
         }
-    }
+    });
+
+    // Save merged result locally (server wins for conflicts)
+    localStorage.setItem("quotes", JSON.stringify(newLocalQuotes));
+
+    // Update UI and categories
+    populateCategories();
+    filterQuotes();
+
+    console.log("Sync complete. Conflicts:", lastConflicts);
+
+    // Return conflicts for callers/tests if needed
+    return lastConflicts;
+}
+
+// Initial setup: populate UI and start periodic sync
+window.addEventListener('DOMContentLoaded', () => {
+    populateCategories();
+    filterQuotes();
+
+    // Do an immediate sync, then every 30 seconds
+    syncQuotes();
+    setInterval(syncQuotes, 30000);
+});
